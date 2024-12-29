@@ -25,4 +25,9 @@ public class Category {
 
     @OneToMany(mappedBy = "category")
     private List<Product> products;
+
+    // Add this constructor for name only
+    public Category(String name) {
+        this.name = name;
+    }
 }
