@@ -21,10 +21,12 @@ public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
 
     @OneToMany(mappedBy = "category")
     private List<Product> products;
+
 
     // Add this constructor for name only
     public Category(String name) {
