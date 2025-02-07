@@ -1,30 +1,38 @@
 package com.shivansh.shoppingcart.service.product;
 
-import java.util.List;
-import java.util.Optional;
-
-import org.springframework.stereotype.Service;
-
+import com.shivansh.shoppingcart.dto.ImageDto;
+import com.shivansh.shoppingcart.dto.ProductDto;
 import com.shivansh.shoppingcart.exceptions.ResourceNotFoundException;
 import com.shivansh.shoppingcart.model.Category;
+import com.shivansh.shoppingcart.model.Image;
 import com.shivansh.shoppingcart.model.Product;
 import com.shivansh.shoppingcart.repository.CategoryRepository;
+import com.shivansh.shoppingcart.repository.ImageRepository;
 import com.shivansh.shoppingcart.repository.ProductRepository;
 import com.shivansh.shoppingcart.request.AddProductRequest;
 import com.shivansh.shoppingcart.request.ProductUpdateRequest;
-
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class ProductService implements IProductService {
-
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
-    private static final String ERROR_MESSAGE = "Product not found";
+    private final ModelMapper modelMapper;
+    private final ImageRepository imageRepository;
 
     @Override
     public Product addProduct(AddProductRequest request) {
+        // check if the category is found in the DB
+        // If Yes, set it as the new product category
+        // If No, the save it as a new category
+        // The set as the new product category.
+
         Category category = Optional.ofNullable(categoryRepository.findByName(request.getCategory().getName()))
                 .orElseGet(() -> {
                     Category newCategory = new Category(request.getCategory().getName());
@@ -41,31 +49,30 @@ public class ProductService implements IProductService {
                 request.getPrice(),
                 request.getInventory(),
                 request.getDescription(),
-                category);
+                category
+        );
     }
+
 
     @Override
     public Product getProductById(Long id) {
         return productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(ERROR_MESSAGE));
+                .orElseThrow(()-> new ResourceNotFoundException("Product not found!"));
     }
 
     @Override
     public void deleteProductById(Long id) {
         productRepository.findById(id)
-                .ifPresentOrElse(
-                        productRepository::delete,
-                        () -> {
-                            throw new ResourceNotFoundException(ERROR_MESSAGE);
-                        });
+                .ifPresentOrElse(productRepository::delete,
+                        () -> {throw new ResourceNotFoundException("Product not found!");});
     }
 
     @Override
     public Product updateProduct(ProductUpdateRequest request, Long productId) {
         return productRepository.findById(productId)
-                .map(existingProduct -> updateExistingProduct(existingProduct, request))
-                .map(productRepository::save)
-                .orElseThrow(() -> new ResourceNotFoundException(ERROR_MESSAGE));
+                .map(existingProduct -> updateExistingProduct(existingProduct,request))
+                .map(productRepository :: save)
+                .orElseThrow(()-> new ResourceNotFoundException("Product not found!"));
     }
 
     private Product updateExistingProduct(Product existingProduct, ProductUpdateRequest request) {
@@ -76,9 +83,9 @@ public class ProductService implements IProductService {
         existingProduct.setDescription(request.getDescription());
 
         Category category = categoryRepository.findByName(request.getCategory().getName());
-
         existingProduct.setCategory(category);
-        return existingProduct;
+        return  existingProduct;
+
     }
 
     @Override
@@ -116,4 +123,19 @@ public class ProductService implements IProductService {
         return productRepository.countByBrandAndName(brand, name);
     }
 
+    @Override
+    public List<ProductDto> getConvertedProducts(List<Product> products) {
+      return products.stream().map(this::convertToDto).toList();
+    }
+
+    @Override
+    public ProductDto convertToDto(Product product) {
+        ProductDto productDto = modelMapper.map(product, ProductDto.class);
+        List<Image> images = imageRepository.findByProductId(product.getId());
+        List<ImageDto> imageDtos = images.stream()
+                .map(image -> modelMapper.map(image, ImageDto.class))
+                .toList();
+        productDto.setImages(imageDtos);
+        return productDto;
+    }
 }

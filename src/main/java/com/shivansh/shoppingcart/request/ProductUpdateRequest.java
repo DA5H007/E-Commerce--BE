@@ -1,10 +1,9 @@
 package com.shivansh.shoppingcart.request;
 
-import java.math.BigDecimal;
-
 import com.shivansh.shoppingcart.model.Category;
-
 import lombok.Data;
+
+import java.math.BigDecimal;
 
 @Data
 public class ProductUpdateRequest {

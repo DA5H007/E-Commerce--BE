@@ -1,15 +1,18 @@
-package com.shivansh.shoppingcart.request;
+package com.shivansh.shoppingcart.dto;
 
 import com.shivansh.shoppingcart.model.Category;
+import com.shivansh.shoppingcart.model.Image;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
-public class AddProductRequest {
+public class ProductDto {
     private Long id;
     private String name;
     private String brand;
@@ -17,4 +20,5 @@ public class AddProductRequest {
     private int inventory;
     private String description;
     private Category category;
+    private List<ImageDto> images;
 }

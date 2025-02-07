@@ -3,8 +3,8 @@ package com.shivansh.shoppingcart.response;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-@Data
 @AllArgsConstructor
+@Data
 public class ApiResponse {
     private String message;
     private Object data;
