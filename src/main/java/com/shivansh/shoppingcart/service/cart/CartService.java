@@ -2,13 +2,17 @@ package com.shivansh.shoppingcart.service.cart;
 
 import com.shivansh.shoppingcart.exceptions.ResourceNotFoundException;
 import com.shivansh.shoppingcart.model.Cart;
+import com.shivansh.shoppingcart.model.Product;
+import com.shivansh.shoppingcart.model.User;
 import com.shivansh.shoppingcart.repository.CartItemRepository;
 import com.shivansh.shoppingcart.repository.CartRepository;
+import com.shivansh.shoppingcart.service.product.IProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Service
@@ -17,6 +21,7 @@ public class CartService implements ICartService{
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final AtomicLong cartIdGenerator = new AtomicLong(0);
+    private final IProductService productService;
 
     @Override
     public Cart getCart(Long id) {
@@ -27,15 +32,13 @@ public class CartService implements ICartService{
         return cartRepository.save(cart);
     }
 
-
     @Transactional
     @Override
     public void clearCart(Long id) {
         Cart cart = getCart(id);
         cartItemRepository.deleteAllByCartId(id);
-        cart.getItems().clear();
+        cart.clearCart();
         cartRepository.deleteById(id);
-
     }
 
     @Override
@@ -44,13 +47,15 @@ public class CartService implements ICartService{
         return cart.getTotalAmount();
     }
 
-    @Override
-    public Long initializeNewCart() {
-        Cart newCart = new Cart();
-        Long newCartId = cartIdGenerator.incrementAndGet();
-        newCart.setId(newCartId);
-        return cartRepository.save(newCart).getId();
 
+    @Override
+    public Cart initializeNewCart(User user) {
+        return Optional.ofNullable(getCartByUserId(user.getId()))
+                .orElseGet(() -> {
+                    Cart cart = new Cart();
+                    cart.setUser(user);
+                    return cartRepository.save(cart);
+                });
     }
 
     @Override
